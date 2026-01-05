@@ -1,0 +1,7 @@
+2026/01/05 09:24:40 [crit] 1#1: pread() "/etc/nginx/conf.d/cms.conf" failed (21: Is a directory)
+2026/01/05 09:30:10 [crit] 1#1: pread() "/etc/nginx/conf.d/cms.conf" failed (21: Is a directory)
+2026/01/05 09:35:45 [crit] 1#1: pread() "/etc/nginx/conf.d/cms.conf" failed (21: Is a directory)
+2026/01/05 09:39:29 [crit] 1#1: pread() "/etc/nginx/conf.d/cms.conf" failed (21: Is a directory)
+2026/01/05 09:43:44 [crit] 1#1: pread() "/etc/nginx/conf.d/cms.conf" failed (21: Is a directory)
+2026/01/05 10:08:54 [crit] 1#1: pread() "/etc/nginx/conf.d/cms.conf" failed (21: Is a directory)
+2026/01/05 10:09:08 [crit] 1#1: pread() "/etc/nginx/conf.d/cms.conf" failed (21: Is a directory)
