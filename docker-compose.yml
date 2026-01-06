@@ -1,75 +1,55 @@
+version: "3.9"
+
 services:
   nginx:
-    build:
-      context: ./docker/nginx
+    image: nginx:latest
+    container_name: nginx_proxy
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ${PROJECT_PATH}:/var/www/html
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-    depends_on:
-      - php-fpm-8.3
-      - php-fpm-8.1
-      - php-fpm-7.4
-      - php-fpm-7.1
-
-  php-fpm-8.3:
-    build:
-      context: ./docker/php-fpm/8.3
-    volumes:
-      - ${PROJECT_PATH}:/var/www/html
-      # Ánh xạ file cấu hình PHP
-      - ./php-fpm/8.3/php.ini:/usr/local/etc/php/php.ini
-
-  php-fpm-8.1:
-    build:
-      context: ./docker/php-fpm/8.1
-    volumes:
-      - ${PROJECT_PATH}:/var/www/html
-      # Ánh xạ file cấu hình PHP
-      - ./php-fpm/8.1/php.ini:/usr/local/etc/php/php.ini
-
-  php-fpm-7.4:
-    build:
-      context: ./docker/php-fpm/7.4
-    volumes:
-      - ${PROJECT_PATH}:/var/www/html
-      # Ánh xạ file cấu hình PHP
-      - ./php-fpm/7.4/php.ini:/usr/local/etc/php/php.ini
-
-  php-fpm-7.1:
-    build:
-      context: ./docker/php-fpm/7.1
-    volumes:
-      - ${PROJECT_PATH}:/var/www/html
-      # Ánh xạ file cấu hình PHP
-      - ./php-fpm/7.1/php.ini:/usr/local/etc/php/php.ini
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - dev_network
 
   mysql:
     image: mysql:8.0
+    container_name: mysql_server
+    restart: always
+    env_file:
+      - .env
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ALLOW_EMPTY_PASSWORD: ${MYSQL_ALLOW_EMPTY_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ALLOW_EMPTY_PASSWORD: ${MYSQL_ALLOW_EMPTY_PASSWORD} # <--- DÒNG BỔ SUNG QUAN TRỌNG
-    volumes:
-      - mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    networks:
+      - dev_network
 
-  postgresql:
-    image: postgres:13
+  postgres:
+    image: postgres:15
+    container_name: postgres_server
+    restart: always
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    networks:
+      - dev_network
 
-volumes:
-  mysql_data:
-  postgres_data:
+networks:
+  dev_network:
+    external: true

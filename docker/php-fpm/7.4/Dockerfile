@@ -1,60 +1,47 @@
 FROM php:7.4-fpm-alpine
 
-# BƯỚC 1: CÀI ĐẶT GÓI HỆ THỐNG
-RUN apk update && apk upgrade && apk add --no-cache \
-    autoconf \
-    build-base \
-    bison \
-    # THÊM CÔNG CỤ NÀY VÀO
-    pkgconf \
-    # Dependency cho mbstring
-    oniguruma-dev \
-    # Các dependencies khác
-    git \
+# Cài đặt các thư viện hệ thống cần thiết cho PHP 7.4
+# Lưu ý: oniguruma-dev là bắt buộc cho mbstring trên PHP 7.4+
+RUN apk add --no-cache \
+    bash \
     curl \
-    unzip \
     libpng-dev \
+    libwebp-dev \
     libjpeg-turbo-dev \
-    libzip-dev \
+    freetype-dev \
     libxml2-dev \
-    icu-dev \
-    gmp-dev \
-    openssl-dev
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    oniguruma-dev \
+    $PHPIZE_DEPS
 
-# -------------------------------------------------------------------
-# BƯỚC 2: CẤU HÌNH VÀ CÀI ĐẶT PHP EXTENSIONS
-# -------------------------------------------------------------------
-
-# Thay thế lệnh configure cũ
-# TỪ: docker-php-ext-configure gd --with-jpeg-dir=/usr/include/
-# SANG:
-RUN docker-php-ext-configure gd --with-jpeg \
-    && docker-php-ext-configure zip
-
-# BƯỚC 3: CÀI ĐẶT EXTENSIONS
-RUN docker-php-ext-install -j$(nproc) \
+# Cấu hình và cài đặt các PHP extensions
+# Riêng gd cần configure để hỗ trợ jpeg/freetype
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
     pdo_mysql \
     mbstring \
-    tokenizer \
-    xml \
-    json \
-    bcmath \
-    zip \
-    gd \
     exif \
-    intl \
-    opcache
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    xml
 
-# -------------------------------------------------------------------
-# BƯỚC 4: CÀI ĐẶT COMPOSER
-# -------------------------------------------------------------------
+# Cài đặt Composer (phiên bản 2.x vẫn hỗ trợ PHP 7.4)
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Tải và cài đặt Composer (sử dụng RUN mới)
-RUN curl -sS https://getcomposer.org/installer -o composer-setup.php \
-    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
-    && rm composer-setup.php
+# (Tùy chọn) Sao chép mã nguồn ứng dụng Laravel vào thư mục làm việc. 
+# Trong môi trường phát triển, thường dùng volume mount.
+# COPY . /var/www/html
 
-# -------------------------------------------------------------------
-# CẤU HÌNH CUỐI CÙNG
-# -------------------------------------------------------------------
-WORKDIR /var/www/html
+# Gán quyền sở hữu thư mục cho user www-data (user mặc định của php-fpm)
+RUN chown -R www-data:www-data /var/www/html
+
+# Expose port mặc định của PHP-FPM
+EXPOSE 9000
+
+# Lệnh mặc định để khởi động PHP-FPM
+CMD ["php-fpm"]

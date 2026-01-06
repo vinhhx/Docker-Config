@@ -1,64 +1,48 @@
 FROM php:7.1-fpm-alpine
 
-# -------------------------------------------------------------------
-# BƯỚC 1: CÀI ĐẶT CÁC GÓI HỆ THỐNG (SYSTEM DEPENDENCIES)
-# -------------------------------------------------------------------
-# Cài đặt các thư viện hệ thống cần thiết cho PHP Extensions và Composer.
+# Cài đặt các dependencies hệ thống
+# Lưu ý: PHP 7.1 vẫn dùng mcrypt (đã bị loại bỏ từ PHP 7.2)
 RUN apk add --no-cache \
-    # Cần cho Composer
-    git \
+    bash \
     curl \
-    unzip \
-    # Dependencies cho gd và exif
     libpng-dev \
     libjpeg-turbo-dev \
-    # Dependency cho zip
-    libzip-dev \
-    # Dependency cho xml
+    freetype-dev \
+    libmcrypt-dev \
     libxml2-dev \
-    # Dependency cho intl
-    icu-dev \
-    # Dependency cho bcmath
-    gmp-dev \
-    # Gói hỗ trợ SSL (nếu cần)
-    openssl-dev
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    oniguruma-dev
 
-# Cấu hình các extension cần thêm tham số (như gd)
-# Cần thực hiện trước khi chạy docker-php-ext-install
-RUN docker-php-ext-configure gd --with-jpeg-dir=/usr/include/
-
-# -------------------------------------------------------------------
-# BƯỚC 2: CÀI ĐẶT PHP EXTENSIONS
-# -------------------------------------------------------------------
-# Cài đặt các PHP Extensions bắt buộc và phổ biến cho Laravel.
-RUN docker-php-ext-install -j$(nproc) \
+# Cấu hình và cài đặt extensions
+# Cú pháp configure GD của PHP 7.1 khác với PHP 7.4/8.x
+RUN docker-php-ext-configure gd \
+    --with-freetype-dir=/usr/include/ \
+    --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install \
     pdo_mysql \
     mbstring \
-    tokenizer \
-    xml \
-    json \
-    bcmath \
-    zip \
-    gd \
+    mcrypt \
     exif \
-    intl \
-    opcache
+    pcntl \
+    bcmath \
+    gd \
+    zip
 
-# -------------------------------------------------------------------
-# BƯỚC 3: CÀI ĐẶT COMPOSER
-# -------------------------------------------------------------------
+# Cài đặt Composer (Nên dùng bản 2.2 cho các dự án cũ để tránh lỗi tương thích)
+COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
 
-# Tải và cài đặt Composer vào /usr/local/bin/ để có thể gọi trực tiếp 'composer'
-RUN curl -sS https://getcomposer.org/installer -o composer-setup.php \
-    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
-    && rm composer-setup.php
+# (Tùy chọn) Sao chép mã nguồn ứng dụng Laravel vào thư mục làm việc. 
+# Trong môi trường phát triển, thường dùng volume mount.
+# COPY . /var/www/html
 
-# -------------------------------------------------------------------
-# BƯỚC 4: CẤU HÌNH CUỐI CÙNG
-# -------------------------------------------------------------------
+# Gán quyền sở hữu thư mục cho user www-data (user mặc định của php-fpm)
+RUN chown -R www-data:www-data /var/www/html
 
-# Đặt thư mục làm việc mặc định
-WORKDIR /var/www/html
+# Expose port mặc định của PHP-FPM
+EXPOSE 9000
 
-# (Tuỳ chọn) Nếu bạn muốn cấu hình PHP-FPM chi tiết hơn, bạn có thể thêm file .ini ở đây:
-# COPY ./php.ini /usr/local/etc/php/conf.d/custom.ini
+# Lệnh mặc định để khởi động PHP-FPM
+CMD ["php-fpm"]

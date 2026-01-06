@@ -1,46 +1,44 @@
 FROM php:8.3-fpm-alpine
 
-# Cài đặt các Dependencies hệ thống cần thiết (Alpine)
-RUN apk add --no-cache \
+# Cài đặt các thư viện hệ thống và phần mở rộng PHP cần thiết cho Laravel
+RUN apk update && apk add --no-cache \
     git \
     curl \
-    unzip \
-    bison \
-    libpng-dev \
+    bash \
     libzip-dev \
-    libxml2-dev \
-    icu-dev \
-    gmp-dev \
-    # THÊM GÓI NÀY VÀO
-    oniguruma-dev 
-    
-# -------------------------------------------------------------------
-# 1. CÀI ĐẶT PHP EXTENSIONS
-# -------------------------------------------------------------------
+    pngquant optipng \
+    autoconf \
+    g++ \
+    gcc \
+    libc-dev \
+    make \
+    # Các thư viện cho tiện ích mở rộng
+    libpng-dev \
+    libjpeg-turbo-dev \
+    oniguruma-dev \
+    # Xóa cache apk để giảm kích thước image
+    && rm -rf /var/cache/apk/*
 
-# Các gói Bắt buộc & Phổ biến cho Laravel
-RUN docker-php-ext-install -j$(nproc) \
-    pdo_mysql \
-    mbstring \
-    tokenizer \
-    xml \
-    json \
-    bcmath \
-    zip \
-    gd \
-    exif \
-    intl
+# Cài đặt các phần mở rộng PHP yêu cầu bởi Laravel (ví dụ: pdo_mysql, zip, bcmath, gd, opcache)
+# Sử dụng docker-php-ext-install để cài đặt chúng
+RUN docker-php-ext-install pdo_mysql zip bcmath gd opcache exif \
+    && docker-php-ext-enable pdo_mysql zip bcmath gd opcache exif
 
-# Opcache: Cần được bật thủ công, thường được cài sẵn nhưng nên xác nhận
-# RUN docker-php-ext-install opcache # Có thể đã được cài sẵn trong 7.x FPM image
+# Cài đặt Composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
-# -------------------------------------------------------------------
-# 2. CÀI ĐẶT COMPOSER
-# -------------------------------------------------------------------
+# (Tùy chọn) Sao chép mã nguồn ứng dụng Laravel vào thư mục làm việc. 
+# Trong môi trường phát triển, thường dùng volume mount.
+# COPY . /var/www/html
 
-# Tải và cài đặt Composer vào /usr/local/bin
-RUN curl -sS https://getcomposer.org/installer -o composer-setup.php \
-    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
-    && rm composer-setup.php
+WORKDIR /var/www/html
+# Gán quyền sở hữu thư mục cho user www-data (user mặc định của php-fpm)
+# Set quyền cho storage và bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html
 
-# ... (Các lệnh WORKDIR và ENTRYPOINT khác)
+
+# Expose port mặc định của PHP-FPM
+EXPOSE 9000
+
+# Lệnh mặc định để khởi động PHP-FPM
+CMD ["php-fpm"]
