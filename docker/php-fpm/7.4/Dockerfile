@@ -10,7 +10,11 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev \
     freetype-dev \
     libxml2-dev \
+    # Bốn gói dưới đây là các gói phụ thuộc thường bị thiếu khi cài libzip-dev
     libzip-dev \
+    zlib-dev \
+    zstd-dev \
+    pkgconfig \
     zip \
     unzip \
     git \
@@ -29,6 +33,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     gd \
     zip \
     xml
+    # Sau khi cài đặt xong extensions, gỡ bỏ các gói build-deps
 
 # Cài đặt Composer (phiên bản 2.x vẫn hỗ trợ PHP 7.4)
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

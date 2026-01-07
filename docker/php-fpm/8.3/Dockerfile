@@ -11,6 +11,7 @@ RUN apk update && apk add --no-cache \
     g++ \
     gcc \
     libc-dev \
+    icu-dev \
     make \
     # Các thư viện cho tiện ích mở rộng
     libpng-dev \
@@ -22,7 +23,8 @@ RUN apk update && apk add --no-cache \
 # Cài đặt các phần mở rộng PHP yêu cầu bởi Laravel (ví dụ: pdo_mysql, zip, bcmath, gd, opcache)
 # Sử dụng docker-php-ext-install để cài đặt chúng
 RUN docker-php-ext-install pdo_mysql zip bcmath gd opcache exif \
-    && docker-php-ext-enable pdo_mysql zip bcmath gd opcache exif
+    && docker-php-ext-enable pdo_mysql zip bcmath gd opcache exif \
+    && docker-php-ext-install intl
 
 # Cài đặt Composer
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
