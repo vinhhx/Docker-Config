@@ -17,6 +17,7 @@ RUN apk update && apk add --no-cache \
     libpng-dev \
     libjpeg-turbo-dev \
     oniguruma-dev \
+    zip unzip \
     # Xóa cache apk để giảm kích thước image
     && rm -rf /var/cache/apk/*
 
@@ -33,10 +34,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 # Trong môi trường phát triển, thường dùng volume mount.
 # COPY . /var/www/html
 
-WORKDIR /var/www/html
+WORKDIR /var/www
 # Gán quyền sở hữu thư mục cho user www-data (user mặc định của php-fpm)
 # Set quyền cho storage và bootstrap/cache
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www
 
 
 # Expose port mặc định của PHP-FPM

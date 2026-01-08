@@ -42,8 +42,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Trong môi trường phát triển, thường dùng volume mount.
 # COPY . /var/www/html
 
+WORKDIR /var/www
 # Gán quyền sở hữu thư mục cho user www-data (user mặc định của php-fpm)
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www
 
 # Expose port mặc định của PHP-FPM
 EXPOSE 9000
