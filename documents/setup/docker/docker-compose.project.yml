@@ -1,33 +1,51 @@
 version: "3.9"
 
 services:
-  lpbank_php:
-    container_name: lpbank_php
+  karofi_php:
+    container_name: karofi_php
     build:
       context: ${DOCKER_CONTEXT}
       dockerfile: ${DOCKERFILE_PATH}
     volumes:
-      - ../../:/var/www/lpbank
-    working_dir: /var/www/lpbank
+      - ${DOCKER_CONTEXT}/docker/configs/php/custom.php.ini:/usr/local/etc/php/conf.d/custom.ini
+      - ../../:/var/www/karofi:cached   # thêm cached
+      # Vendor riêng, không bị host đè
+      - dev_vendor:/var/www/karofi/vendor
+
+    working_dir: /var/www/karofi
     networks:
       - dev_network
 
-  lpbank_nginx:
+  karofi_nginx:
     image: nginx:latest
-    container_name: lpbank_nginx
+    container_name: karofi_nginx
     volumes:
-      - ../../:/var/www/lpbank
-      - ./nginx/lpbank-local.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../../:/var/www/karofi:cached   # thêm cached
+      # Vendor riêng, không bị host đè
+      - dev_vendor:/var/www/karofi/vendor
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - lpbank_php
+      - karofi_php
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.lpbank.rule=Host(\"lpbank.local\")"
-      - "traefik.http.routers.lpbank.entrypoints=web"
-      - "traefik.http.services.lpbank.loadbalancer.server.port=80"
+      - "traefik.http.routers.karofi.rule=Host(\"karofi.local\")"
+      - "traefik.http.routers.karofi.entrypoints=web"
+      # =======================================================
+      # 2. ROUTER SUBDOMAIN: admin.karofi.local
+      # =======================================================
+      - "traefik.http.routers.admin-karofi.rule=Host(`admin.karofi.local`)" # <-- Tên router phải khác
+      - "traefik.http.routers.admin-karofi.entrypoints=web"
+
+      # =======================================================
+      # 3. ĐỊNH NGHĨA SERVICE (LoadBalancer) CHUNG
+      # Cả hai Router đều trỏ đến cổng 80 của container karofi_nginx
+      # =======================================================
+      - "traefik.http.services.karofi.loadbalancer.server.port=80"
     networks:
       - dev_network
 
 networks:
   dev_network:
     external: true
+volumes:
+  dev_vendor:

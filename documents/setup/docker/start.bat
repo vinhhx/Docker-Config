@@ -1,19 +1,19 @@
 @echo off
-REM Start script cho project lpbank project
+REM Start script cho project karofi project
 
 cd /d %~dp0
 
 
 REM --- Chạy docker-compose ---
-docker-compose -p lpbank --env-file .env.docker -f docker-compose.project.yml up -d --build
+docker-compose -p karofi --env-file .env.docker -f docker-compose.project.yml up -d --build
 
 
 REM --- Fix quyền cho Laravel ---
 echo Set quyền cho runtime và web ...
-docker exec lpbank_php bash -c "chown -R www-data:www-data storage bootstrap/cache && chmod -R 775 storage bootstrap/cache"
+docker exec karofi_php bash -c "chown -R www-data:www-data storage bootstrap/cache && chmod -R 775 storage bootstrap/cache"
 
 
 
 echo.
-echo Project lpbank đã được khởi động và Nginx đã reload config!
+echo Project karofi đã được khởi động và Nginx đã reload config!
 pause
