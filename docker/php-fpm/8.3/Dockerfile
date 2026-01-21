@@ -6,6 +6,7 @@ RUN apk update && apk add --no-cache \
     curl \
     bash \
     libzip-dev \
+    libpq-dev \
     pngquant optipng \
     autoconf \
     g++ \
@@ -21,11 +22,16 @@ RUN apk update && apk add --no-cache \
     # Xóa cache apk để giảm kích thước image
     && rm -rf /var/cache/apk/*
 
+# Cài đặt extension Redis qua PECL
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
 # Cài đặt các phần mở rộng PHP yêu cầu bởi Laravel (ví dụ: pdo_mysql, zip, bcmath, gd, opcache)
 # Sử dụng docker-php-ext-install để cài đặt chúng
 RUN docker-php-ext-install pdo_mysql zip bcmath gd opcache exif \
     && docker-php-ext-enable pdo_mysql zip bcmath gd opcache exif \
-    && docker-php-ext-install intl
+    && docker-php-ext-install intl \
+    && docker-php-ext-install pdo_pgsql
 
 # Cài đặt Composer
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
